@@ -1,5 +1,5 @@
 {
-  "name": "markdown-preview",
+  "name": "template",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -23,11 +23,11 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vrizaldi/markdown-preview.git"
+    "url": ""
   },
   "bugs": {
-    "url": "https://github.com/vrizaldi/markdown-preview/issues"
+    "url": ""
   },
-  "homepage": "https://github.com/vrizaldi/markdown-preview#readme",
-  "description": "Gives you a preview of your markdown document. You can also change it on the fly! "
+  "homepage": "",
+  "description": ""
 }
