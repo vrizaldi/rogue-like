@@ -1,4 +1,3 @@
-const marked = require("marked");
 const express = require("express");
 
 var server = express();

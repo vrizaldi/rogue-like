@@ -5,7 +5,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node ./src/server.js",
-    "uglifycss": "uglifycss --ugly-comments ./src/css/index.html > ./src/css/index.min.css"
+    "uglifycss": "uglifycss --ugly-comments ./src/css/index.css > ./src/public/index.min.css"
   },
   "dependencies": {
     "babel-core": "^6.0.20",
