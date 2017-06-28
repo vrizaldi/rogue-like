@@ -1,0 +1,39 @@
+body {
+	text-align: center;
+	color: #fff;
+	background-color: #000;
+	font-style: Monospace;
+}
+
+button {
+	background-color: red;
+	border: none;
+}
+a {
+	color: #fff;
+	text-decoration: none;
+}
+body * {
+	margin: auto;
+}
+
+button {
+	display: block;
+	padding: 0.5em;
+	color: #fff;
+}
+
+#instruction {
+	font-style: Helvetica, Arial;
+	width: 10em;
+	font-size: 1.3em;
+}
+
+.red-text {
+	color: #ff0000;
+}
+
+#credit {
+	font-family: Helvetica, Arial;
+	font-size: 0.8em;
+}

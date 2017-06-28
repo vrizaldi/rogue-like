@@ -7,8 +7,13 @@ const MAX_ROOM_NUM = 20;
 
 const RENDER_SCALE = 25;
 
-const CAM_WIDTH = 21;
+const CAM_WIDTH = 15;
 const CAM_HEIGHT = 21;
+
+const WALL = 0;
+const PATH = 1;
+const ENEMY = 3;
+const LOOT = 4;
 
 export default class Board extends React.Component {
 
@@ -21,14 +26,16 @@ export default class Board extends React.Component {
 				atk: 0,
 				lvl: 0,
 				exp: 0,
-				weapon: "",
+	//			weapon: "",
 				x: 0,
 				y: 0
 			},
 			camX: 0,
 			camY: 0,
 			paths: [],
-			canStart: false
+			enemies: {},
+			canStart: false,
+			dead: false
 		};
 	}
 
@@ -57,7 +64,75 @@ export default class Board extends React.Component {
 	}
 
 	movePlayer(x, y) {
-		var { player, camX, camY } = this.state;
+
+		if(this.state.dead) return;
+		console.log("dead:", this.state.dead);
+
+		var { player, camX, camY, paths, boss, enemies } = this.state;
+		var newPosX = player.x + x;
+		var newPosY = player.y + y;
+		if(newPosX < 0
+				|| newPosX >= WORLD_WIDTH
+				|| newPosY < 0
+				|| newPosY >= WORLD_HEIGHT
+				|| paths[newPosX][newPosY] == WALL) 
+			// prevent illegal position
+			return;
+
+		else if(paths[newPosX][newPosY] == LOOT) {
+			var rand = Math.random();
+
+			if(rand < 0.5) {
+				// hp item
+				player.hp += 30;
+				if(player.hp > 60) player.hp = 60;
+
+			} else {
+				// better weapon
+				player.atk += 10;
+				if(player.atk > 20) player.atk = 20;
+			}
+			paths[newPosX][newPosY] = PATH;
+
+		} else if(paths[newPosX][newPosY] == ENEMY) {
+			// an enemy	
+			console.log(enemies);
+			console.log("finding", "" + newPosX + "," + newPosY);
+			var enemy = enemies["" + newPosX + "," + newPosY];
+			enemy.hp -= player.atk;
+			console.log("enemy hp: ",enemy.hp)
+			player.hp -= Math.floor(Math.random() * 11);
+				// take random damage
+			this.setState({enemy});
+
+			if(player.hp <= 0) {
+				// lost the game
+				player.hp = 0;
+
+				// move enemy onto player
+				// showing that they're dead
+				paths[newPosX][newPosY] = PATH;
+				paths[player.x][player.y] = ENEMY;
+				player.x = -200;
+				player.y = -200;
+				
+				this.setState({dead: true, player, paths});
+				this.updateGame();
+					// final render
+				return;
+			}
+			
+			if(enemy.hp > 0) {
+				// enemy still alive
+				return;
+			} 		
+			// otherwise get xp, change tile and move on
+			paths[newPosX][newPosY] = PATH;
+			player.exp += Math.round(Math.random()) + 1;
+			console.log(player.exp);
+			player.lvl = this.checkLevel(player);
+		}
+
 		player.x += x;
 		player.y += y;
 		
@@ -73,6 +148,30 @@ export default class Board extends React.Component {
 			// update to the next tick
 	}
 
+	checkLevel(player) {
+		var { exp } = player;
+		if(exp > 300) {
+			return 10;
+		} else if(exp > 250) {
+			return 9;
+		} else if(exp > 128) {
+			return 8;
+		} else if(exp > 64) {
+			return 7;
+		} else if(exp > 32) {
+			return 6;
+		} else if(exp > 16) {
+			return 5;
+		} else if(exp > 8) {
+			return 4;
+		} else if(exp > 4) {
+			return 3;
+		} else if(exp > 2) {
+			return 2;
+		} else {
+			return 1;
+		}
+	}
 
 	componentWillUnmount() {
 		document.removeEventHandler("keydown");
@@ -80,20 +179,21 @@ export default class Board extends React.Component {
 
 	newGame() {
 
+		var paths = this.createPaths();
 		this.setState({
 				player: {
-				hp: 100,
+				hp: 30,
 				atk: 7,
 				lvl: 1,
 				exp: 0,
-				weapon: "stick",
 				x: 0,
 				y: 0
 			},
 			camX: -Math.floor(CAM_WIDTH / 2),
 			camY: -Math.floor(CAM_HEIGHT / 2),
-			paths: this.createPaths(),
-			canStart: true
+			paths,
+			canStart: true,
+			dead: false
 		});
 	}
 
@@ -104,7 +204,7 @@ export default class Board extends React.Component {
 		for(var x = 0; x < WORLD_WIDTH; x++) {
 			paths[x] = [];
 			for(var y = 0; y < WORLD_HEIGHT; y++) {
-				paths[x][y] = false;
+				paths[x][y] = WALL;
 			}
 		}
 		this.createRoom(0, paths, 0, 0);
@@ -113,6 +213,7 @@ export default class Board extends React.Component {
 
 	createRoom(count, paths, x, y) {
 		if(count > MAX_ROOM_NUM) return;
+			// stop making room
 
 		// use recursion to make rooms to paths
 		var width = Math.ceil(Math.random() * 9 + 1);
@@ -127,17 +228,32 @@ export default class Board extends React.Component {
 			for(var offY = 0; offY < height; offY++) {
 				if(y + offY >= WORLD_HEIGHT) break;
 
-				paths[x + offX][y + offY] = true;
+				var rand = Math.random();
+				if(rand < 0.01) {
+					console.log("enemy", x + offX, y + offY)
+					paths[x + offX][y + offY]	= ENEMY;	
+					var enemy = {
+						hp: 30
+					};
+					this.state.enemies["" + (x + offX) + "," + (y + offY)] = enemy;
+						// use the coord as id
+			//		console.log("enemy:", x, y);
+				} else if(rand < 0.02) {
+					paths[x + offX][y + offY] = LOOT;
+				} else {
+					paths[x + offX][y + offY] = PATH;
+				}
 			}
 		}
 
 		// create the next room
 		var east = Math.random() < 0.5 ? true : false;
-		if(east && x < WORLD_WIDTH - 1) {
+		if(y == WORLD_HEIGHT - 1 
+				|| (east && x < WORLD_WIDTH - 1)) {
 			// create next room in the east
 			this.createRoom(++count, paths, x + width, y);
-		} else if(!east && y < WORLD_HEIGHT - 1) {
-			// create next room in the north
+		} else if(!east) {
+			// create next room in the south
 			this.createRoom(++count, paths, x, y + height);
 		}
 	}
@@ -170,7 +286,7 @@ export default class Board extends React.Component {
 						|| x < 0
 						|| y > WORLD_HEIGHT
 						|| y < 0
-						|| !paths[x][y]) {
+						|| paths[x][y] == WALL) {
 					// fill in with black
 					// if cam outside the world
 					// or if there's no path
@@ -181,10 +297,18 @@ export default class Board extends React.Component {
 					// draw player green
 					ctx.fillStyle = "#00ff00";
 
-				}	else if(paths[x][y]) {
+				} else if(paths[x][y] == PATH) {
 					// draw paths yellow
 					ctx.fillStyle = "#d2ef11";
-				} 
+
+				} else if(paths[x][y] == ENEMY) {
+					// draw enemy red
+					ctx.fillStyle = "#ff0000";
+
+				} else if(paths[x][y] == LOOT) {
+					ctx.fillStyle = "#0000ff";
+				}
+
 				ctx.fillRect(offX * RENDER_SCALE, 
 						offY * RENDER_SCALE, 
 						RENDER_SCALE, 
@@ -203,6 +327,9 @@ export default class Board extends React.Component {
 		return(
 			<div>
 				<button onClick={this.newGame.bind(this)}>New Game</button>
+				<p id="hp">HP: {this.state.player.hp}</p>
+				<p id="atk">ATK: {this.state.player.atk}</p>
+				<p id="lvl">LVL: {this.state.player.lvl}</p>
 				{this.state.canStart ? 
 						(<button 
 								onClick={this.initGame.bind(this)}>
