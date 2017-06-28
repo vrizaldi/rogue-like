@@ -20,17 +20,12 @@
     "express": "^4.15.3",
     "react": "^0.14.6",
     "react-dom": "^0.14.6",
+    "react-router": "^1.0.3",
+    "history": "^1.17.0",
+    "flux": "^2.1.1",
     "webpack": "^1.15.0"
   },
   "author": "vrizaldi",
   "license": "ISC",
-  "repository": {
-    "type": "git",
-    "url": ""
-  },
-  "bugs": {
-    "url": ""
-  },
-  "homepage": "",
   "description": ""
 }
